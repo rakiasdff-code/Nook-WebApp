@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 36 19% 93%;
+    --foreground: 30 11% 41%;
+
+    --card: 36 33% 98%;
+    --card-foreground: 30 11% 41%;
+
+    --popover: 36 33% 98%;
+    --popover-foreground: 30 11% 41%;
+
+    --primary: 76 29% 29%;
+    --primary-foreground: 72 17% 94%;
+
+    --secondary: 72 17% 94%;
+    --secondary-foreground: 76 29% 29%;
+
+    --muted: 72 17% 94%;
+    --muted-foreground: 73 10% 48%;
+
+    --accent: 72 17% 94%;
+    --accent-foreground: 76 29% 29%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 72 17% 94%;
+
+    --border: 76 12% 82%;
+    --input: 76 12% 82%;
+    --ring: 76 29% 29%;
+
+    --radius: 0.5rem;
+
+    --brand-forest: 76 29% 29%;
+    --brand-forest-light: 76 12% 82%;
+    --surface-paper: 36 19% 93%;
+    --surface-paper-light: 36 33% 98%;
+    --text-primary: 30 11% 41%;
+    --text-secondary: 73 10% 48%;
+    
+    /* Color para el texto de la frase destacada */
+    --sds-color-text-default-secondary: #4A4A3A;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-[#EFEDEB] text-foreground font-sans;
+  }
+
+  :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  pre,
+  code {
+    white-space: pre;
+  }
+}
+
+@layer utilities {
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(0.95);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 1.4s ease-in-out infinite;
+  }
+}
+
