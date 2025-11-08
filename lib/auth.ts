@@ -38,19 +38,18 @@ export async function signUp(email: string, password: string, displayName: strin
     await updateProfile(user, { displayName });
     console.log("[Auth] Perfil actualizado");
 
-    // Send email verification
+    // Send email verification (SIN parámetros adicionales)
     console.log("[Auth] Enviando email de verificación...");
     try {
-      await sendEmailVerification(user, {
-        url: window.location.origin + '/register', // Redirect back to register page
-        handleCodeInApp: false
-      });
-      console.log("[Auth] ✅ Email de verificación enviado a:", email);
+      await sendEmailVerification(user);
+      console.log("[Auth] ✅ Email de verificación enviado exitosamente a:", email);
+      console.log("[Auth] ℹ️ El usuario debe revisar su bandeja de entrada");
     } catch (emailError: any) {
-      console.error("[Auth] ❌ Error al enviar email:", emailError);
-      // No lanzar error, el usuario ya fue creado
-      // Solo notificar que hay un problema con el email
-      throw new Error("Usuario creado pero el email de verificación falló. Por favor solicita un reenvío.");
+      console.error("[Auth] ❌ ERROR al enviar email:", emailError);
+      console.error("[Auth] Error code:", emailError.code);
+      console.error("[Auth] Error message:", emailError.message);
+      // Lanzar error para que el usuario sepa que hay un problema
+      throw new Error("No se pudo enviar el email de verificación. Código: " + emailError.code);
     }
 
     // NO crear perfil en Firestore aquí
@@ -73,14 +72,17 @@ export async function signUp(email: string, password: string, displayName: strin
  */
 export async function resendVerificationEmail() {
   try {
-    if (auth.currentUser) {
-      await sendEmailVerification(auth.currentUser);
-    } else {
-      throw new Error("No user logged in");
+    if (!auth.currentUser) {
+      throw new Error("No hay usuario autenticado");
     }
+    
+    console.log("[Auth] Reenviando email de verificación a:", auth.currentUser.email);
+    await sendEmailVerification(auth.currentUser);
+    console.log("[Auth] ✅ Email reenviado exitosamente");
   } catch (error: any) {
-    console.error("Error resending verification email:", error);
-    throw new Error(error.message || "Failed to resend verification email");
+    console.error("[Auth] ❌ Error reenviando email:", error);
+    console.error("[Auth] Error code:", error.code);
+    throw error;
   }
 }
 
