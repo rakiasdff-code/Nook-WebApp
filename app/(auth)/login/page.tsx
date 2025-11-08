@@ -19,12 +19,33 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await signIn(email, password);
+      const user = await signIn(email, password);
+      
+      // Check if email is verified
+      if (!user.emailVerified) {
+        toast.error("Por favor verifica tu email antes de iniciar sesión", {
+          description: "Revisa tu bandeja de entrada y spam",
+          duration: 5000
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       toast.success("¡Bienvenido de nuevo!");
       router.push("/home");
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || "Error al iniciar sesión");
+      
+      // Handle specific errors
+      if (error.message.includes("user-not-found") || error.message.includes("wrong-password")) {
+        toast.error("Email o contraseña incorrectos");
+      } else if (error.message.includes("too-many-requests")) {
+        toast.error("Demasiados intentos. Por favor intenta más tarde.");
+      } else if (error.message.includes("network")) {
+        toast.error("Error de conexión. Por favor intenta de nuevo.");
+      } else {
+        toast.error(error.message || "Error al iniciar sesión");
+      }
     } finally {
       setIsLoading(false);
     }

@@ -6,7 +6,9 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
-  updateProfile
+  updateProfile,
+  sendEmailVerification,
+  reload
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -21,6 +23,7 @@ export interface UserProfile {
 
 /**
  * Sign up a new user with email and password
+ * Sends email verification automatically
  */
 export async function signUp(email: string, password: string, displayName: string) {
   try {
@@ -29,6 +32,9 @@ export async function signUp(email: string, password: string, displayName: strin
 
     // Update user profile with display name
     await updateProfile(user, { displayName });
+
+    // Send email verification
+    await sendEmailVerification(user);
 
     // Create user profile in Firestore
     const userProfile: UserProfile = {
@@ -45,6 +51,38 @@ export async function signUp(email: string, password: string, displayName: strin
   } catch (error: any) {
     console.error("Error signing up:", error);
     throw new Error(error.message || "Failed to sign up");
+  }
+}
+
+/**
+ * Resend email verification
+ */
+export async function resendVerificationEmail() {
+  try {
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser);
+    } else {
+      throw new Error("No user logged in");
+    }
+  } catch (error: any) {
+    console.error("Error resending verification email:", error);
+    throw new Error(error.message || "Failed to resend verification email");
+  }
+}
+
+/**
+ * Check if email is verified (reloads user first)
+ */
+export async function checkEmailVerified(): Promise<boolean> {
+  try {
+    if (auth.currentUser) {
+      await reload(auth.currentUser);
+      return auth.currentUser.emailVerified;
+    }
+    return false;
+  } catch (error: any) {
+    console.error("Error checking email verification:", error);
+    return false;
   }
 }
 

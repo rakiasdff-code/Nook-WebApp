@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AuthLayout from "@/components/auth/AuthLayout";
-import { signUp } from "@/lib/auth";
+import EmailVerification from "@/components/auth/EmailVerification";
+import { signUp, checkEmailVerified } from "@/lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -15,6 +16,25 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+
+  // Polling para verificar email
+  useEffect(() => {
+    if (!showVerification) return;
+
+    const interval = setInterval(async () => {
+      const isVerified = await checkEmailVerified();
+      
+      if (isVerified) {
+        clearInterval(interval);
+        // Redirigir a loading screen
+        router.push("/loading-register");
+      }
+    }, 3000); // Check every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [showVerification, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,15 +53,35 @@ export default function RegisterPage() {
 
     try {
       await signUp(email, password, username);
-      toast.success("¡Cuenta creada exitosamente! Bienvenido a Nook 📚");
-      router.push("/home");
+      setRegisteredEmail(email);
+      setShowVerification(true);
+      toast.success("Email de verificación enviado 📧");
     } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error(error.message || "Error al crear la cuenta");
+      
+      // Handle specific errors
+      if (error.message.includes("email-already-in-use")) {
+        toast.error("Este email ya está registrado");
+      } else if (error.message.includes("invalid-email")) {
+        toast.error("Email inválido");
+      } else if (error.message.includes("network")) {
+        toast.error("Error de conexión. Por favor intenta de nuevo.");
+      } else {
+        toast.error(error.message || "Error al crear la cuenta");
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Si ya se mostró la verificación, mostrar componente EmailVerification
+  if (showVerification) {
+    return (
+      <AuthLayout>
+        <EmailVerification email={registeredEmail} />
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout>

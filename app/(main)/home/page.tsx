@@ -1,6 +1,14 @@
+"use client";
+
 import Image from "next/image";
+import { useAuth } from "@/lib/AuthContext";
+import { getGreeting, getDisplayName } from "@/lib/utils/greetings";
 
 export default function HomePage() {
+  const { user, userProfile } = useAuth();
+  const greeting = getGreeting();
+  const displayName = getDisplayName(userProfile?.displayName, user?.email);
+
   return (
     <div className="min-h-screen bg-surface-paper">
       {/* Hero Section */}
@@ -10,12 +18,11 @@ export default function HomePage() {
           <div className="space-y-10">
             <div className="space-y-5">
               <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-semibold text-nook-green-light leading-[1.15] tracking-tight">
-                Good morning,<br />Name!
+                {greeting.title},<br />{displayName}!
               </h1>
               
-              <p className="font-sans text-xl md:text-2xl text-brand-forest leading-relaxed">
-                Your cozy corner is waiting for you,<br />
-                Ready to dive into your next chapter?
+              <p className="font-sans text-xl md:text-2xl text-brand-forest leading-relaxed whitespace-pre-line">
+                {greeting.subtitle}
               </p>
               
               <div className="flex flex-wrap gap-6 pt-4">
