@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========================================
+    // REGLAS DE DESARROLLO CON SEGURIDAD BÁSICA
+    // ========================================
+    
+    // Helper: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper: Check if user is the owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ========================================
+    // COLLECTION: users
+    // ========================================
+    match /users/{userId} {
+      
+      // LECTURA: Solo el propietario puede leer su perfil
+      allow read: if isOwner(userId);
+      
+      // CREACIÓN: Solo puede crear su propio perfil
+      // (Sin requisito de email verificado para desarrollo)
+      allow create: if isOwner(userId)
+                    && request.resource.data.uid == userId
+                    && request.resource.data.email == request.auth.token.email;
+      
+      // ACTUALIZACIÓN: Solo el propietario puede actualizar su perfil
+      // (Restricción: no puede cambiar UID ni email)
+      allow update: if isOwner(userId)
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.email == resource.data.email;
+      
+      // ELIMINACIÓN: No permitida desde el cliente
+      allow delete: if false;
+    }
+    
+    // ========================================
+    // COLLECTION: books (for future)
+    // ========================================
+    match /books/{bookId} {
+      // Autenticados pueden leer cualquier libro
+      allow read: if isAuthenticated();
+      
+      // Solo puede crear libros propios
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid;
+      
+      // Solo el dueño puede modificar/eliminar
+      allow update, delete: if isAuthenticated() 
+                            && resource.data.userId == request.auth.uid;
+    }
+    
+    // ========================================
+    // DEFAULT: Block everything else
+    // ========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

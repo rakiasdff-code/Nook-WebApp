@@ -2,7 +2,15 @@
 
 Este documento explica cómo configurar las reglas de seguridad de Firestore para tu aplicación Nook.
 
-## 📋 Pasos para configurar las reglas
+## ⚠️ IMPORTANTE: Usa las reglas de DESARROLLO primero
+
+Hay **dos archivos de reglas**:
+- **`firestore-dev.rules`**: Para desarrollo (USA ESTE PRIMERO)
+- **`firestore.rules`**: Para producción (usa después de probar todo)
+
+---
+
+## 📋 PASO 1: Configurar reglas de DESARROLLO
 
 ### 1. Ve a Firebase Console
 
@@ -20,9 +28,9 @@ En el menú lateral izquierdo, busca y haz click en **"Firestore Database"**
 
 En la parte superior, haz click en la pestaña **"Rules"**
 
-### 5. Copia y pega las reglas
+### 5. Copia y pega las reglas de DESARROLLO
 
-Borra todo el contenido actual y pega esto:
+Borra todo el contenido actual y copia el contenido de **`firestore-dev.rules`**:
 
 ```javascript
 rules_version = '2';
@@ -106,9 +114,42 @@ service cloud.firestore {
 
 Haz click en el botón **"Publish"** (azul, arriba a la derecha)
 
+⏱️ **Espera 30-60 segundos** para que las reglas se propaguen.
+
 ---
 
-## 🔒 ¿Qué hacen estas reglas?
+## 🔒 ¿Qué hacen las reglas de DESARROLLO?
+
+### Colección `users` (firestore-dev.rules)
+
+| Operación | Permiso | Explicación |
+|-----------|---------|-------------|
+| **Read** | Solo el propietario | Un usuario solo puede leer su propio perfil |
+| **Create** | Usuario autenticado | Puede crear su perfil (SIN requisito de email verificado) |
+| **Update** | Solo el propietario con restricciones | Puede actualizar su perfil PERO no puede cambiar email ni UID |
+| **Delete** | Bloqueado | Nadie puede borrar perfiles desde el cliente |
+
+### Diferencias: Desarrollo vs Producción
+
+| Aspecto | Desarrollo (`firestore-dev.rules`) | Producción (`firestore.rules`) |
+|---------|-----------------------------------|--------------------------------|
+| **Email verificado** | ❌ No requerido | ✅ Requerido |
+| **Validación de campos** | Básica | Estricta |
+| **Suscripción** | Puede cambiar | Solo backend |
+| **Seguridad** | Media | Alta |
+
+---
+
+## 📋 PASO 2: Cuando todo funcione, cambiar a reglas de PRODUCCIÓN
+
+Una vez que hayas probado el flujo completo y todo funcione:
+
+1. Ve a Firebase Console → Firestore → Rules
+2. Borra todo el contenido
+3. Copia el contenido de **`firestore.rules`** (reglas de producción)
+4. Haz click en **"Publish"**
+
+## 🔒 ¿Qué hacen las reglas de PRODUCCIÓN?
 
 ### Colección `users`
 
