@@ -192,3 +192,7 @@ This is a private project. Contact the owner for contribution guidelines.
 
 All rights reserved.
 
+---
+
+**Made with ❤️ by rakiasdff-code**
+
