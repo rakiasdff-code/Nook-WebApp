@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========================================
+    // HELPER FUNCTIONS
+    // ========================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is the owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if email is verified
+    function isEmailVerified() {
+      return isAuthenticated() && request.auth.token.email_verified == true;
+    }
+    
+    // ========================================
+    // COLLECTION: users
+    // ========================================
+    match /users/{userId} {
+      
+      // RULE 1: Read - Users can only read their own profile
+      allow read: if isOwner(userId);
+      
+      // RULE 2: Create - Only during registration with verified email
+      allow create: if isOwner(userId)
+                    && isEmailVerified()
+                    && request.resource.data.uid == userId
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.subscription == "free"
+                    && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt', 'subscription']);
+      
+      // RULE 3: Update - Can update own profile but with restrictions
+      allow update: if isOwner(userId)
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.email == resource.data.email
+                    && request.resource.data.subscription == resource.data.subscription
+                    && request.resource.data.createdAt == resource.data.createdAt;
+      
+      // RULE 4: Delete - Not allowed from client
+      allow delete: if false;
+    }
+    
+    // ========================================
+    // COLLECTION: books (for future)
+    // ========================================
+    match /books/{bookId} {
+      // Read: Authenticated users can read any book
+      allow read: if isAuthenticated();
+      
+      // Create: Only if user owns the book
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid;
+      
+      // Update/Delete: Only owner can modify
+      allow update, delete: if isAuthenticated() 
+                            && resource.data.userId == request.auth.uid;
+    }
+    
+    // ========================================
+    // DEFAULT: Block everything else
+    // ========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

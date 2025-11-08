@@ -24,33 +24,47 @@ export interface UserProfile {
 /**
  * Sign up a new user with email and password
  * Sends email verification automatically
+ * NOTA: El perfil de Firestore se crea DESPUÉS de verificar el email
  */
 export async function signUp(email: string, password: string, displayName: string) {
   try {
+    console.log("[Auth] Creando usuario en Firebase...");
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    console.log("[Auth] Usuario creado:", user.uid);
 
     // Update user profile with display name
+    console.log("[Auth] Actualizando perfil...");
     await updateProfile(user, { displayName });
+    console.log("[Auth] Perfil actualizado");
 
     // Send email verification
-    await sendEmailVerification(user);
+    console.log("[Auth] Enviando email de verificación...");
+    try {
+      await sendEmailVerification(user, {
+        url: window.location.origin + '/register', // Redirect back to register page
+        handleCodeInApp: false
+      });
+      console.log("[Auth] ✅ Email de verificación enviado a:", email);
+    } catch (emailError: any) {
+      console.error("[Auth] ❌ Error al enviar email:", emailError);
+      // No lanzar error, el usuario ya fue creado
+      // Solo notificar que hay un problema con el email
+      throw new Error("Usuario creado pero el email de verificación falló. Por favor solicita un reenvío.");
+    }
 
-    // Create user profile in Firestore
-    const userProfile: UserProfile = {
-      uid: user.uid,
-      email: user.email || email,
-      displayName,
-      createdAt: new Date(),
-      subscription: "free",
-    };
-
-    await setDoc(doc(db, "users", user.uid), userProfile);
+    // NO crear perfil en Firestore aquí
+    // Se creará después de verificar el email
+    console.log("[Auth] ⚠️ Perfil de Firestore se creará después de verificar email");
 
     return user;
   } catch (error: any) {
-    console.error("Error signing up:", error);
-    throw new Error(error.message || "Failed to sign up");
+    console.error("[Auth] Error en signUp:", error);
+    console.error("[Auth] Error code:", error.code);
+    console.error("[Auth] Error message:", error.message);
+    
+    // Re-throw the original error to preserve error codes
+    throw error;
   }
 }
 
@@ -108,6 +122,31 @@ export async function signOut() {
   } catch (error: any) {
     console.error("Error signing out:", error);
     throw new Error(error.message || "Failed to sign out");
+  }
+}
+
+/**
+ * Create user profile in Firestore (called after email verification)
+ */
+export async function createUserProfile(user: User): Promise<UserProfile> {
+  try {
+    console.log("[Auth] Creando perfil en Firestore para:", user.uid);
+    
+    const userProfile: UserProfile = {
+      uid: user.uid,
+      email: user.email || "",
+      displayName: user.displayName || "",
+      createdAt: new Date(),
+      subscription: "free",
+    };
+
+    await setDoc(doc(db, "users", user.uid), userProfile);
+    console.log("[Auth] ✅ Perfil creado en Firestore");
+    
+    return userProfile;
+  } catch (error: any) {
+    console.error("[Auth] ❌ Error creando perfil:", error);
+    throw error;
   }
 }
 

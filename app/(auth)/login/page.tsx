@@ -27,17 +27,32 @@ export default function LoginPage() {
           description: "Revisa tu bandeja de entrada y spam",
           duration: 5000
         });
+        // Cerrar sesión si el email no está verificado
+        const { signOut } = await import("@/lib/auth");
+        await signOut();
         setIsLoading(false);
         return;
       }
       
       toast.success("¡Bienvenido de nuevo!");
-      router.push("/home");
+      
+      // Verificar si el usuario tiene perfil en Firestore
+      const { getUserProfile } = await import("@/lib/auth");
+      const profile = await getUserProfile(user.uid);
+      
+      if (!profile) {
+        // Si no tiene perfil, ir a loading screen para crearlo
+        console.log("Usuario sin perfil, redirigiendo a loading screen");
+        router.push("/loading-register");
+      } else {
+        // Si ya tiene perfil, ir directamente a home
+        router.push("/home");
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       
       // Handle specific errors
-      if (error.message.includes("user-not-found") || error.message.includes("wrong-password")) {
+      if (error.message.includes("user-not-found") || error.message.includes("wrong-password") || error.code === "auth/invalid-credential") {
         toast.error("Email o contraseña incorrectos");
       } else if (error.message.includes("too-many-requests")) {
         toast.error("Demasiados intentos. Por favor intenta más tarde.");

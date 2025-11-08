@@ -45,6 +45,13 @@ export default function EmailVerification({ email }: EmailVerificationProps) {
         <p className="font-sans text-lg text-nook-brown max-w-md mx-auto">
           Click the link to activate your nook.
         </p>
+        <p className="font-sans text-base text-brand-forest font-medium max-w-md mx-auto pt-2">
+          After verifying, return to the{" "}
+          <a href="/login" className="underline hover:text-nook-green-dark transition-colors">
+            login page
+          </a>{" "}
+          to access your account.
+        </p>
       </div>
 
       {/* Resend button */}
@@ -58,7 +65,7 @@ export default function EmailVerification({ email }: EmailVerificationProps) {
 
       {/* Help text */}
       <p className="font-sans text-sm text-nook-brown/60 max-w-sm mx-auto">
-        Didn't receive it? Check your spam folder
+        Didn't receive it? Check your spam folder.
       </p>
     </div>
   );

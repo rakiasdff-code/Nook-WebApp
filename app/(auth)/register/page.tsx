@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AuthLayout from "@/components/auth/AuthLayout";
 import EmailVerification from "@/components/auth/EmailVerification";
-import { signUp, checkEmailVerified } from "@/lib/auth";
+import { signUp } from "@/lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,23 +18,6 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
-
-  // Polling para verificar email
-  useEffect(() => {
-    if (!showVerification) return;
-
-    const interval = setInterval(async () => {
-      const isVerified = await checkEmailVerified();
-      
-      if (isVerified) {
-        clearInterval(interval);
-        // Redirigir a loading screen
-        router.push("/loading-register");
-      }
-    }, 3000); // Check every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [showVerification, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,26 +35,47 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      console.log("Iniciando registro...", { email, username });
+      
       await signUp(email, password, username);
+      
+      console.log("Usuario registrado exitosamente");
+      
+      // Cerrar sesión inmediatamente para forzar verificación de email
+      // El usuario deberá verificar su email y luego hacer login
+      const { signOut } = await import("@/lib/auth");
+      await signOut();
+      console.log("Sesión cerrada, usuario debe verificar email");
+      
       setRegisteredEmail(email);
       setShowVerification(true);
       toast.success("Email de verificación enviado 📧");
     } catch (error: any) {
-      console.error("Registration error:", error);
+      console.error("Registration error completo:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
       
-      // Handle specific errors
-      if (error.message.includes("email-already-in-use")) {
+      setIsLoading(false); // Asegurarse de que se quite el loading
+      
+      // Handle specific Firebase errors by code
+      if (error.code === "auth/email-already-in-use") {
         toast.error("Este email ya está registrado");
-      } else if (error.message.includes("invalid-email")) {
+      } else if (error.code === "auth/invalid-email") {
         toast.error("Email inválido");
-      } else if (error.message.includes("network")) {
+      } else if (error.code === "auth/weak-password") {
+        toast.error("La contraseña es muy débil");
+      } else if (error.code === "auth/network-request-failed") {
         toast.error("Error de conexión. Por favor intenta de nuevo.");
+      } else if (error.message?.includes("Firebase")) {
+        toast.error("Error de Firebase: Verifica tu configuración");
       } else {
-        toast.error(error.message || "Error al crear la cuenta");
+        toast.error(error.message || "Error al crear la cuenta. Revisa la consola.");
       }
-    } finally {
-      setIsLoading(false);
+      return; // No continuar si hay error
     }
+    
+    // Solo quitar loading si fue exitoso (se muestra EmailVerification)
+    setIsLoading(false);
   };
 
   // Si ya se mostró la verificación, mostrar componente EmailVerification
