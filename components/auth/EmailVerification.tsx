@@ -46,11 +46,9 @@ export default function EmailVerification({ email }: EmailVerificationProps) {
           Click the link to activate your nook.
         </p>
         <p className="font-sans text-base text-brand-forest font-medium max-w-md mx-auto pt-2">
-          After verifying, return to the{" "}
-          <a href="/login" className="underline hover:text-nook-green-dark transition-colors">
-            login page
-          </a>{" "}
-          to access your account.
+          ✨ We'll automatically continue once you verify your email.
+          <br />
+          Keep this page open!
         </p>
       </div>
 

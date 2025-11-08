@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AuthLayout from "@/components/auth/AuthLayout";
 import EmailVerification from "@/components/auth/EmailVerification";
-import { signUp } from "@/lib/auth";
+import { signUp, checkEmailVerified } from "@/lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,6 +18,30 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+
+  // Polling automático para detectar verificación de email
+  useEffect(() => {
+    if (!showVerification) return;
+
+    console.log("🔄 Iniciando polling para verificar email...");
+    
+    const interval = setInterval(async () => {
+      console.log("🔍 Verificando si el email fue verificado...");
+      const isVerified = await checkEmailVerified();
+      
+      if (isVerified) {
+        console.log("✅ Email verificado! Redirigiendo a loading screen...");
+        clearInterval(interval);
+        toast.success("¡Email verificado! Creando tu perfil...");
+        router.push("/loading-register");
+      }
+    }, 3000); // Check every 3 seconds
+
+    return () => {
+      console.log("🛑 Deteniendo polling");
+      clearInterval(interval);
+    };
+  }, [showVerification, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +64,7 @@ export default function RegisterPage() {
       await signUp(email, password, username);
       
       console.log("Usuario registrado exitosamente");
-      
-      // Cerrar sesión inmediatamente para forzar verificación de email
-      // El usuario deberá verificar su email y luego hacer login
-      const { signOut } = await import("@/lib/auth");
-      await signOut();
-      console.log("Sesión cerrada, usuario debe verificar email");
+      console.log("⚠️ Mantener sesión activa para polling automático");
       
       setRegisteredEmail(email);
       setShowVerification(true);
