@@ -26,8 +26,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
       // Si no hay perfil en Firestore, redirigir a la página de loading para crearlo
       if (!userProfile) {
-        console.log("⚠️ ProtectedRoute: Usuario sin perfil, redirigiendo a /loading-register");
-        router.push("/loading-register");
+        console.log("⚠️ ProtectedRoute: Usuario sin perfil, redirigiendo a /register/loading");
+        router.push("/register/loading");
         return;
       }
 

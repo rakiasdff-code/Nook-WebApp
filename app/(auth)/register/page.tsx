@@ -24,16 +24,16 @@ export default function RegisterPage() {
     if (!showVerification) return;
 
     console.log("🔄 Iniciando polling para verificar email...");
-    
+
     const interval = setInterval(async () => {
       console.log("🔍 Verificando si el email fue verificado...");
       const isVerified = await checkEmailVerified();
-      
+
       if (isVerified) {
         console.log("✅ Email verificado! Redirigiendo a loading screen...");
         clearInterval(interval);
         toast.success("¡Email verificado! Creando tu perfil...");
-        router.push("/loading-register");
+        router.push("/register/loading");
       }
     }, 3000); // Check every 3 seconds
 
@@ -60,12 +60,12 @@ export default function RegisterPage() {
 
     try {
       console.log("Iniciando registro...", { email, username });
-      
+
       await signUp(email, password, username);
-      
+
       console.log("Usuario registrado exitosamente");
       console.log("⚠️ Mantener sesión activa para polling automático");
-      
+
       setRegisteredEmail(email);
       setShowVerification(true);
       toast.success("Email de verificación enviado 📧");
@@ -73,9 +73,9 @@ export default function RegisterPage() {
       console.error("Registration error completo:", error);
       console.error("Error code:", error.code);
       console.error("Error message:", error.message);
-      
+
       setIsLoading(false); // Asegurarse de que se quite el loading
-      
+
       // Handle specific Firebase errors by code
       if (error.code === "auth/email-already-in-use") {
         toast.error("Este email ya está registrado");
@@ -88,11 +88,13 @@ export default function RegisterPage() {
       } else if (error.message?.includes("Firebase")) {
         toast.error("Error de Firebase: Verifica tu configuración");
       } else {
-        toast.error(error.message || "Error al crear la cuenta. Revisa la consola.");
+        toast.error(
+          error.message || "Error al crear la cuenta. Revisa la consola.",
+        );
       }
       return; // No continuar si hay error
     }
-    
+
     // Solo quitar loading si fue exitoso (se muestra EmailVerification)
     setIsLoading(false);
   };

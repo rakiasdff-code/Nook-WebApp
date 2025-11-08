@@ -89,12 +89,42 @@
     }
   }
 
+  /* Animación suave flotante para la ilustración */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-15px);
+    }
+  }
+
+  /* Animación de carga progresiva para bullets */
+  @keyframes pulse-scale {
+    0%, 100% {
+      opacity: 0.4;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
+
   .animate-fade-in {
     animation: fade-in 0.3s ease-out;
   }
 
   .animate-pulse-subtle {
     animation: pulse-subtle 1.4s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-scale {
+    animation: pulse-scale 1.2s ease-in-out infinite;
   }
 }
 

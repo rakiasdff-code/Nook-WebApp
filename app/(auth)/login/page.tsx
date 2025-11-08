@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,22 +35,19 @@ export default function LoginPage() {
         return;
       }
       
+      // Mostrar pantalla de carga inline
+      setIsLoading(false); // Ya no necesitamos el loading del botón
+      setShowLoadingScreen(true);
+      
+      // Esperar 4 segundos mínimo antes de redirigir
+      await new Promise(resolve => setTimeout(resolve, 4000));
+      
       toast.success("¡Bienvenido de nuevo!");
-      
-      // Verificar si el usuario tiene perfil en Firestore
-      const { getUserProfile } = await import("@/lib/auth");
-      const profile = await getUserProfile(user.uid);
-      
-      if (!profile) {
-        // Si no tiene perfil, ir a loading screen para crearlo
-        console.log("Usuario sin perfil, redirigiendo a loading screen");
-        router.push("/loading-register");
-      } else {
-        // Si ya tiene perfil, ir directamente a home
-        router.push("/home");
-      }
+      router.push("/home");
     } catch (error: any) {
       console.error("Login error:", error);
+      setIsLoading(false);
+      setShowLoadingScreen(false);
       
       // Handle specific errors
       if (error.message.includes("user-not-found") || error.message.includes("wrong-password") || error.code === "auth/invalid-credential") {
@@ -61,10 +59,36 @@ export default function LoginPage() {
       } else {
         toast.error(error.message || "Error al iniciar sesión");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  // Si está mostrando la pantalla de loading, mostrarla
+  if (showLoadingScreen) {
+    return (
+      <div className="min-h-screen bg-[#F5F1E8] flex items-center justify-center px-4">
+        <div className="text-center space-y-10 max-w-2xl mx-auto">
+          <div className="flex justify-center animate-float">
+            <img
+              src="/recursos/book-illustration.png"
+              alt="Book illustration"
+              className="w-48 h-48 md:w-56 md:h-56 object-contain"
+            />
+          </div>
+          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium text-nook-brown leading-relaxed px-4">
+            Welcome back to your nook!
+          </h1>
+          <div className="flex items-center justify-center gap-2.5">
+            <div className="w-3 h-3 rounded-full bg-brand-forest animate-pulse-scale" style={{ animationDelay: "0ms" }}></div>
+            <div className="w-3 h-3 rounded-full bg-brand-forest animate-pulse-scale" style={{ animationDelay: "200ms" }}></div>
+            <div className="w-3 h-3 rounded-full bg-brand-forest animate-pulse-scale" style={{ animationDelay: "400ms" }}></div>
+          </div>
+          <p className="font-sans text-lg text-nook-brown/70 px-4">
+            Preparing your reading corner...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthLayout>

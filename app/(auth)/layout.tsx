@@ -18,6 +18,12 @@ export default function AuthLayout({
     // Evitar redirecciones múltiples
     if (hasRedirected || loading) return;
 
+    // NO redirigir si estamos en páginas de loading - dejar que muestren su contenido
+    if (pathname?.includes('/loading')) {
+      console.log("ℹ️ AuthLayout: En página de loading, no redirigir");
+      return;
+    }
+
     // Solo redirigir si el usuario está COMPLETAMENTE autenticado
     // (tiene email verificado Y perfil en Firestore)
     if (user && user.emailVerified && userProfile) {
