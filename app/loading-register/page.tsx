@@ -30,6 +30,14 @@ export default function LoadingRegisterPage() {
         return;
       }
 
+      // NUEVO: Verificar si el email está verificado
+      if (!loading && user && !user.emailVerified) {
+        console.log("⚠️ Email no verificado, redirigiendo a registro");
+        toast.error("Debes verificar tu email antes de continuar");
+        router.push("/register");
+        return;
+      }
+
       // Si ya hay perfil, redirigir a home
       if (!loading && user && userProfile) {
         console.log("✅ Usuario y perfil ya existen, redirigiendo a home...");
@@ -37,8 +45,8 @@ export default function LoadingRegisterPage() {
         return;
       }
 
-      // Si hay usuario pero no perfil, crearlo
-      if (!loading && user && !userProfile && !isCreatingProfile) {
+      // Si hay usuario con email verificado pero no perfil, crearlo
+      if (!loading && user && user.emailVerified && !userProfile && !isCreatingProfile) {
         setIsCreatingProfile(true);
         console.log("⏳ Creando perfil de usuario en Firestore...");
         
