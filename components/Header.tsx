@@ -1,7 +1,41 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import Logo from "./Logo";
+import { useAuth } from "@/lib/AuthContext";
+import { signOut } from "@/lib/auth";
 
 export default function Header() {
+  const { user, userProfile } = useAuth();
+  const router = useRouter();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Sesión cerrada correctamente");
+      router.push("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Error al cerrar sesión");
+    }
+  };
+
+  const getInitials = () => {
+    if (userProfile?.displayName) {
+      return userProfile.displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return user?.email?.[0].toUpperCase() || "U";
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#E0D8D1] bg-[rgba(250,250,249,0.80)] backdrop-blur-sm">
       <div className="w-full h-20 px-4 md:px-7 flex items-center justify-between">
@@ -39,11 +73,63 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="w-13 h-13 rounded-full bg-brand-forest flex items-center justify-center hover:bg-nook-green-dark transition-colors">
-            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20.9999 7.00001C22.8565 7.00001 24.6369 7.73751 25.9497 9.05026C27.2624 10.363 27.9999 12.1435 27.9999 14C27.9999 15.8565 27.2624 17.637 25.9497 18.9498C24.6369 20.2625 22.8565 21 20.9999 21C19.1434 21 17.363 20.2625 16.0502 18.9498C14.7374 17.637 13.9999 15.8565 13.9999 14C13.9999 12.1435 14.7374 10.363 16.0502 9.05026C17.363 7.73751 19.1434 7.00001 20.9999 7.00001ZM20.9999 24.5C28.7349 24.5 34.9999 27.6325 34.9999 31.5V35H6.99995V31.5C6.99995 27.6325 13.2649 24.5 20.9999 24.5Z" fill="white"/>
-            </svg>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-13 h-13 rounded-full bg-brand-forest flex items-center justify-center hover:bg-nook-green-dark transition-colors text-white font-sans font-bold text-lg"
+              title={userProfile?.displayName || user?.email || "Usuario"}
+            >
+              {getInitials()}
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-[#E0D8D1] py-2 z-50">
+                <div className="px-4 py-3 border-b border-[#E0D8D1]">
+                  <p className="font-sans text-sm font-semibold text-nook-brown truncate">
+                    {userProfile?.displayName || "Usuario"}
+                  </p>
+                  <p className="font-sans text-xs text-nook-brown/60 truncate">
+                    {user?.email}
+                  </p>
+                  <p className="font-sans text-xs text-brand-forest font-medium mt-1">
+                    Plan: {userProfile?.subscription === "premium" ? "Premium" : "Free"}
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    router.push("/profile");
+                  }}
+                  className="w-full text-left px-4 py-2 font-sans text-sm text-nook-brown hover:bg-surface-paper-light transition-colors"
+                >
+                  Mi perfil
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    router.push("/settings");
+                  }}
+                  className="w-full text-left px-4 py-2 font-sans text-sm text-nook-brown hover:bg-surface-paper-light transition-colors"
+                >
+                  Configuración
+                </button>
+                
+                <div className="border-t border-[#E0D8D1] mt-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      handleLogout();
+                    }}
+                    className="w-full text-left px-4 py-2 font-sans text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button className="md:hidden w-9 h-7 flex flex-col justify-between">
             <div className="w-full h-0.5 bg-brand-forest"></div>

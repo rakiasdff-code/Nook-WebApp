@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { signUp } from "@/lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,18 +20,24 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Passwords don't match");
+      toast.error("Las contraseñas no coinciden");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // TODO: Implement Firebase authentication
-      // await signUp(email, password, username);
-      router.push("/loading");
-    } catch (error) {
+      await signUp(email, password, username);
+      toast.success("¡Cuenta creada exitosamente! Bienvenido a Nook 📚");
+      router.push("/home");
+    } catch (error: any) {
       console.error("Registration error:", error);
+      toast.error(error.message || "Error al crear la cuenta");
     } finally {
       setIsLoading(false);
     }

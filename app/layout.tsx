@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Vollkorn } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/components/Providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,8 +29,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${vollkorn.variable}`}>
       <body className={`${inter.className} antialiased`}>
-        {children}
-        <Toaster />
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

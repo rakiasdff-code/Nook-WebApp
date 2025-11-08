@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { signIn } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,11 +19,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement Firebase authentication
-      // await signIn(email, password);
-      router.push("/loading");
-    } catch (error) {
+      await signIn(email, password);
+      toast.success("¡Bienvenido de nuevo!");
+      router.push("/home");
+    } catch (error: any) {
       console.error("Login error:", error);
+      toast.error(error.message || "Error al iniciar sesión");
     } finally {
       setIsLoading(false);
     }
