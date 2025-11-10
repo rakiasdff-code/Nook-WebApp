@@ -3,11 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
-import { Camera, Palette, Mail, User, Calendar, Check, X, Edit2, Lock } from "lucide-react";
+import { Camera, Palette, Mail, User, Calendar, Check, X } from "lucide-react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { uploadImage, fileToBase64 } from "@/lib/storage";
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 
 // Available genres
 const AVAILABLE_GENRES = [
@@ -16,7 +15,6 @@ const AVAILABLE_GENRES = [
   "Mystery",
   "Thriller",
   "Romance",
-  "Romantasy",
   "Historical Fiction",
   "Contemporary",
   "Young Adult",
@@ -58,10 +56,7 @@ const BANNER_OPTIONS = [
 
 export default function ProfilePage() {
   const { user, userProfile } = useAuth();
-  
-  // Editing states for each section
-  const [editingSection, setEditingSection] = useState<string | null>(null);
-  
+  const [isEditing, setIsEditing] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(
     userProfile?.favoriteGenres || [],
   );
@@ -78,19 +73,6 @@ export default function ProfilePage() {
   const [bannerBackground, setBannerBackground] = useState<string>(
     userProfile?.bannerColor || BANNER_OPTIONS[0].value,
   );
-  
-  // Password change states
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  
-  // Privacy settings
-  const [showDisplayName, setShowDisplayName] = useState(
-    userProfile?.showDisplayName ?? true
-  );
-  const [showBio, setShowBio] = useState(userProfile?.showBio ?? true);
-  const [showGenres, setShowGenres] = useState(userProfile?.showGenres ?? true);
-  
   const [showBannerMenu, setShowBannerMenu] = useState(false);
   const [showAllGenres, setShowAllGenres] = useState(false);
   const [profileFile, setProfileFile] = useState<File | null>(null);
@@ -109,9 +91,6 @@ export default function ProfilePage() {
       setProfileImage(userProfile.photoURL || null);
       setBannerImage(userProfile.bannerImage || null);
       setBannerBackground(userProfile.bannerColor || BANNER_OPTIONS[0].value);
-      setShowDisplayName(userProfile.showDisplayName ?? true);
-      setShowBio(userProfile.showBio ?? true);
-      setShowGenres(userProfile.showGenres ?? true);
     }
   }, [userProfile]);
 
@@ -205,109 +184,49 @@ export default function ProfilePage() {
     setShowBannerMenu(false);
   };
 
-  const handleSaveSection = async (section: string) => {
+  const handleSave = async () => {
     if (!user) return;
 
     setIsUploading(true);
 
     try {
-      let updateData: any = {
-        updatedAt: new Date(),
-      };
+      let profileImageURL = profileImage;
+      let bannerImageURL = bannerImage;
 
-      // Handle different sections
-      if (section === "about") {
-        let profileImageURL = profileImage;
-        
-        if (profileFile) {
-          toast.info("Uploading profile image...");
-          profileImageURL = await uploadImage(profileFile, user.uid, "profile");
-        }
+      if (profileFile) {
+        toast.info("Uploading profile image...");
+        profileImageURL = await uploadImage(profileFile, user.uid, "profile");
+      }
 
-        updateData = {
-          ...updateData,
-          displayName: displayName.trim() || user.email?.split("@")[0] || "Reader",
-          bio: aboutText,
-          photoURL: profileImageURL,
-          favoriteGenres: selectedGenres,
-          showDisplayName,
-          showBio,
-          showGenres,
-        };
-        
-        setProfileFile(null);
-      } else if (section === "banner") {
-        let bannerImageURL = bannerImage;
-        
-        if (bannerFile) {
-          toast.info("Uploading banner image...");
-          bannerImageURL = await uploadImage(bannerFile, user.uid, "banner");
-        }
-
-        updateData = {
-          ...updateData,
-          bannerImage: bannerFile ? bannerImageURL : bannerImage,
-          bannerColor: bannerFile ? "" : bannerBackground,
-        };
-        
-        setBannerFile(null);
+      if (bannerFile) {
+        toast.info("Uploading banner image...");
+        bannerImageURL = await uploadImage(bannerFile, user.uid, "banner");
       }
 
       const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, updateData);
+      await updateDoc(userRef, {
+        displayName:
+          displayName.trim() || user.email?.split("@")[0] || "Reader",
+        bio: aboutText,
+        photoURL: profileImageURL,
+        bannerImage: bannerFile ? bannerImageURL : bannerImage,
+        bannerColor: bannerFile ? "" : bannerBackground,
+        favoriteGenres: selectedGenres,
+        updatedAt: new Date(),
+      });
 
-      toast.success("Changes saved successfully");
-      setEditingSection(null);
+      setProfileFile(null);
+      setBannerFile(null);
+
+      toast.success("Profile updated successfully", {
+        description: "Your changes have been saved",
+      });
+      setIsEditing(false);
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to save changes", {
+      toast.error("Failed to update profile", {
         description: error.message || "Please try again later",
       });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (!user) return;
-
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords don't match");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      // Reautenticar usuario
-      const credential = EmailAuthProvider.credential(
-        user.email!,
-        currentPassword
-      );
-      await reauthenticateWithCredential(user, credential);
-
-      // Cambiar contraseña
-      await updatePassword(user, newPassword);
-
-      toast.success("Password changed successfully");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setEditingSection(null);
-    } catch (error: any) {
-      console.error("Error changing password:", error);
-      if (error.code === "auth/wrong-password") {
-        toast.error("Current password is incorrect");
-      } else {
-        toast.error("Failed to change password", {
-          description: error.message || "Please try again later",
-        });
-      }
     } finally {
       setIsUploading(false);
     }
@@ -333,11 +252,11 @@ export default function ProfilePage() {
                 }
               : { background: bannerBackground }
           }
-          onMouseEnter={() => editingSection === "banner" && setShowBannerMenu(true)}
+          onMouseEnter={() => isEditing && setShowBannerMenu(true)}
           onMouseLeave={() => setShowBannerMenu(false)}
         >
           {/* Banner Edit Overlay */}
-          {editingSection === "banner" && showBannerMenu && (
+          {isEditing && showBannerMenu && (
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
               <div className="text-center">
                 <Palette className="w-12 h-12 text-white mx-auto mb-2" />
@@ -349,7 +268,7 @@ export default function ProfilePage() {
           )}
 
           {/* Banner Menu */}
-          {editingSection === "banner" && showBannerMenu && (
+          {isEditing && showBannerMenu && (
             <div className="absolute top-4 right-4 bg-[#FCFBF8] rounded-xl p-4 w-80 shadow-xl z-50">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-serif font-semibold text-lg text-[#5F6B39]">
@@ -388,10 +307,10 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Avatar - 200px */}
+        {/* Avatar */}
         <div
-          className="absolute left-16 w-[200px] h-[200px] rounded-full border-4 border-white bg-[#5F6B39] flex items-center justify-center text-white text-6xl font-serif font-semibold shadow-lg overflow-hidden"
-          style={{ bottom: "-40px" }}
+          className="absolute left-16 w-20 h-20 rounded-full border-4 border-white bg-[#5F6B39] flex items-center justify-center text-white text-2xl font-serif font-semibold shadow-lg overflow-hidden"
+          style={{ bottom: "-16px" }}
         >
           {profileImage ? (
             <img
@@ -402,40 +321,24 @@ export default function ProfilePage() {
           ) : (
             getInitials()
           )}
-          {editingSection === "about" && (
+          {isEditing && (
             <button
               onClick={() => profileInputRef.current?.click()}
               className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
             >
-              <Camera className="w-8 h-8 text-white" />
+              <Camera className="w-6 h-6 text-white" />
             </button>
           )}
         </div>
 
-        {/* Edit Banner Button */}
-        {editingSection !== "banner" ? (
+        {/* Edit Button */}
+        {!isEditing && (
           <button
-            onClick={() => setEditingSection("banner")}
-            className="absolute top-4 right-4 p-2 bg-white/90 rounded-lg hover:bg-white transition-all shadow-lg"
+            onClick={() => setIsEditing(true)}
+            className="absolute top-4 right-4 px-6 py-2 bg-[#5F6B39] text-white rounded-lg hover:bg-[#4D5630] transition-all font-medium"
           >
-            <Edit2 className="w-5 h-5 text-[#5F6B39]" />
+            Edit my profile
           </button>
-        ) : (
-          <div className="absolute top-4 right-4 flex gap-2">
-            <button
-              onClick={() => setEditingSection(null)}
-              className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => handleSaveSection("banner")}
-              disabled={isUploading}
-              className="px-4 py-2 bg-[#5F6B39] text-white rounded-lg hover:bg-[#4D5630] transition-all font-medium disabled:opacity-50"
-            >
-              {isUploading ? "Saving..." : "Save"}
-            </button>
-          </div>
         )}
 
         {/* Hidden file inputs */}
@@ -457,15 +360,15 @@ export default function ProfilePage() {
 
       {/* Content */}
       <div style={{ paddingLeft: "72px", paddingRight: "72px" }}>
-        {/* Profile Name & Subtitle - 80px from avatar bottom */}
-        <div style={{ marginTop: "80px" }} className="mb-8">
+        {/* Profile Name & Subtitle */}
+        <div className="mt-8 mb-8">
           <h1 className="text-7xl font-serif font-semibold text-[#5F6B39] mb-2">
             {displayName ||
               userProfile?.displayName ||
               user?.email?.split("@")[0] ||
               "Reader"}
           </h1>
-          <p className="text-sm font-light text-[#4D453F]">
+          <p className="text-sm font-light text-gray-600">
             Manage your personal information and reading preferences
           </p>
         </div>
@@ -524,41 +427,14 @@ export default function ProfilePage() {
 
         {/* About You Card */}
         <div
-          className="bg-[#FCFBF8] rounded-xl p-6 mb-8 relative"
+          className="bg-[#FCFBF8] rounded-xl p-6 mb-8"
           style={{
             boxShadow: "0 2px 17.1px 0 rgba(0, 0, 0, 0.05)",
           }}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-serif font-semibold text-[#5F6B39]">
-              About you
-            </h2>
-            
-            {editingSection !== "about" ? (
-              <button
-                onClick={() => setEditingSection("about")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-all"
-              >
-                <Edit2 className="w-5 h-5 text-[#5F6B39]" />
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setEditingSection(null)}
-                  className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleSaveSection("about")}
-                  disabled={isUploading}
-                  className="px-4 py-2 bg-[#5F6B39] text-white rounded-lg hover:bg-[#4D5630] transition-all font-medium text-sm disabled:opacity-50"
-                >
-                  {isUploading ? "Saving..." : "Save"}
-                </button>
-              </div>
-            )}
-          </div>
+          <h2 className="text-3xl font-serif font-semibold text-[#5F6B39] mb-6">
+            About you
+          </h2>
 
           <div className="grid grid-cols-2 gap-8">
             {/* Left Column */}
@@ -568,29 +444,14 @@ export default function ProfilePage() {
                 <label className="block text-base font-medium mb-2">
                   How should we call you?
                 </label>
-                 <input
-                   type="text"
-                   value={displayName}
-                   onChange={(e) => setDisplayName(e.target.value)}
-                   placeholder="The name that makes you comfortable..."
-                   disabled={editingSection !== "about"}
-                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#5F6B39] focus:outline-none transition-all text-sm font-light disabled:bg-gray-50 disabled:cursor-not-allowed"
-                 />
-                 <div className="flex items-center justify-between mt-2">
-                   <p className="text-xs text-gray-500">
-                     We'll use this name in your reading corner and personal messages
-                   </p>
-                   <label className="flex items-center gap-2 cursor-pointer">
-                     <input
-                       type="checkbox"
-                       checked={showDisplayName}
-                       onChange={(e) => setShowDisplayName(e.target.checked)}
-                       disabled={editingSection !== "about"}
-                       className="w-4 h-4 text-[#5F6B39] border-gray-300 rounded focus:ring-[#5F6B39] disabled:cursor-not-allowed"
-                     />
-                     <span className="text-xs text-gray-600">Show to others</span>
-                   </label>
-                 </div>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="The name that makes you comfortable..."
+                  disabled={!isEditing}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#5F6B39] focus:outline-none transition-all text-sm font-light disabled:bg-gray-50 disabled:cursor-not-allowed"
+                />
               </div>
 
               {/* Bio */}
@@ -598,30 +459,18 @@ export default function ProfilePage() {
                 <label className="block text-base font-medium mb-2">
                   Tell your story
                 </label>
-                 <textarea
-                   value={aboutText}
-                   onChange={(e) => setAboutText(e.target.value)}
-                   placeholder="Share what makes you a reader, your favorite escape, or simply say hello..."
-                   disabled={editingSection !== "about"}
-                   maxLength={500}
-                   rows={6}
-                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#5F6B39] focus:outline-none transition-all text-sm font-light resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
-                 />
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500">
-                    {aboutText.length} / 500
-                  </p>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showBio}
-                      onChange={(e) => setShowBio(e.target.checked)}
-                      disabled={editingSection !== "about"}
-                      className="w-4 h-4 text-[#5F6B39] border-gray-300 rounded focus:ring-[#5F6B39] disabled:cursor-not-allowed"
-                    />
-                    <span className="text-xs text-gray-600">Show to others</span>
-                  </label>
-                </div>
+                <textarea
+                  value={aboutText}
+                  onChange={(e) => setAboutText(e.target.value)}
+                  placeholder="Share what makes you a reader, your favorite escape, or simply say hello..."
+                  disabled={!isEditing}
+                  maxLength={500}
+                  rows={6}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#5F6B39] focus:outline-none transition-all text-sm font-light resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-500 mt-1 text-right">
+                  {aboutText.length} / 500
+                </p>
               </div>
             </div>
 
@@ -647,7 +496,7 @@ export default function ProfilePage() {
                         className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#5F6B39] text-white text-sm rounded-full"
                       >
                         {genre}
-                        {editingSection === "about" && (
+                        {isEditing && (
                           <button
                             onClick={() => handleGenreToggle(genre)}
                             className="hover:opacity-70"
@@ -668,130 +517,26 @@ export default function ProfilePage() {
                   {displayedGenres
                     .filter((g) => !selectedGenres.includes(g))
                     .map((genre) => (
-                       <button
-                         key={genre}
-                         onClick={() => editingSection === "about" && handleGenreToggle(genre)}
-                         disabled={editingSection !== "about"}
-                         className="px-3 py-1.5 border-2 border-gray-300 text-[#5F6B39] text-sm rounded-full hover:border-[#5F6B39] hover:bg-[#5F6B39]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         {genre}
-                       </button>
-                     ))}
-                 </div>
+                      <button
+                        key={genre}
+                        onClick={() => isEditing && handleGenreToggle(genre)}
+                        disabled={!isEditing}
+                        className="px-3 py-1.5 border-2 border-gray-300 text-[#5F6B39] text-sm rounded-full hover:border-[#5F6B39] hover:bg-[#5F6B39]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {genre}
+                      </button>
+                    ))}
+                </div>
 
-                 {AVAILABLE_GENRES.length > 12 && editingSection === "about" && (
-                   <button
-                     onClick={() => setShowAllGenres(!showAllGenres)}
-                     className="mt-3 text-sm text-[#5F6B39] hover:underline font-medium"
-                   >
-                     {showAllGenres ? "Show less" : "Show all genres"}
-                   </button>
-                 )}
-                 
-                 <div className="mt-4">
-                   <label className="flex items-center gap-2 cursor-pointer">
-                     <input
-                       type="checkbox"
-                       checked={showGenres}
-                       onChange={(e) => setShowGenres(e.target.checked)}
-                       disabled={editingSection !== "about"}
-                       className="w-4 h-4 text-[#5F6B39] border-gray-300 rounded focus:ring-[#5F6B39] disabled:cursor-not-allowed"
-                     />
-                     <span className="text-xs text-gray-600">Show genres to others</span>
-                   </label>
-                 </div>
+                {AVAILABLE_GENRES.length > 12 && (
+                  <button
+                    onClick={() => setShowAllGenres(!showAllGenres)}
+                    className="mt-3 text-sm text-[#5F6B39] hover:underline font-medium"
+                  >
+                    {showAllGenres ? "Show less" : "Show all genres"}
+                  </button>
+                )}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Security Card */}
-        <div
-          className="bg-[#FCFBF8] rounded-xl p-6 mb-8 relative"
-          style={{
-            boxShadow: "0 2px 17.1px 0 rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-serif font-semibold text-[#5F6B39]">
-              Security
-            </h2>
-            
-            {editingSection !== "password" ? (
-              <button
-                onClick={() => setEditingSection("password")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-all"
-              >
-                <Edit2 className="w-5 h-5 text-[#5F6B39]" />
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setEditingSection(null);
-                    setCurrentPassword("");
-                    setNewPassword("");
-                    setConfirmPassword("");
-                  }}
-                  className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleChangePassword}
-                  disabled={isUploading || !currentPassword || !newPassword || !confirmPassword}
-                  className="px-4 py-2 bg-[#5F6B39] text-white rounded-lg hover:bg-[#4D5630] transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isUploading ? "Changing..." : "Change Password"}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-6">
-            {/* Current Password */}
-            <div>
-              <label className="block text-base font-medium mb-2">
-                Current Password
-              </label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
-                disabled={editingSection !== "password"}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#5F6B39] focus:outline-none transition-all text-sm font-light disabled:bg-gray-50 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            {/* New Password */}
-            <div>
-              <label className="block text-base font-medium mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password (min. 6 chars)"
-                disabled={editingSection !== "password"}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#5F6B39] focus:outline-none transition-all text-sm font-light disabled:bg-gray-50 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-base font-medium mb-2">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                disabled={editingSection !== "password"}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#5F6B39] focus:outline-none transition-all text-sm font-light disabled:bg-gray-50 disabled:cursor-not-allowed"
-              />
             </div>
           </div>
         </div>
@@ -807,7 +552,7 @@ export default function ProfilePage() {
             Plan
           </h2>
 
-          <div className="max-w-md">
+          <div className="text-center max-w-md mx-auto">
             <div className="inline-block px-4 py-1.5 bg-[#5F6B39] text-white rounded-full text-sm font-medium mb-4">
               {userProfile?.subscription === "premium" ? "PREMIUM" : "FREE"}
             </div>
@@ -865,6 +610,32 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Save/Cancel Buttons */}
+        {isEditing && (
+          <div className="flex justify-end gap-4 mb-8">
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isUploading}
+              className="px-8 py-3 bg-[#5F6B39] text-white rounded-lg hover:bg-[#4D5630] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isUploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="text-center py-8 border-t border-gray-200">

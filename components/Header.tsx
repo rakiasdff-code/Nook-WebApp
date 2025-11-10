@@ -62,16 +62,28 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Profile Icon */}
+          {/* Profile Icon - Same size as menu */}
           <Link href="/profile">
-            <button className="w-13 h-13 hover:opacity-80 transition-opacity">
-              <Image
-                src="/recursos/profile-icon.svg"
-                alt="Profile"
-                width={52}
-                height={52}
-                className="w-13 h-13"
-              />
+            <button className="w-9 h-7 hover:opacity-80 transition-opacity relative flex items-center justify-center">
+              {userProfile?.photoURL ? (
+                <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-[#5F6B39]">
+                  <Image
+                    src={userProfile.photoURL}
+                    alt="Profile"
+                    width={28}
+                    height={28}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <Image
+                  src="/recursos/profile-icon.svg"
+                  alt="Profile"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7"
+                />
+              )}
             </button>
           </Link>
 

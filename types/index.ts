@@ -9,6 +9,9 @@ export interface User {
   bannerColor?: string;
   bio?: string;
   favoriteGenres?: string[];
+  showDisplayName?: boolean;
+  showBio?: boolean;
+  showGenres?: boolean;
   createdAt?: any;
   updatedAt?: any;
 }
