@@ -5,6 +5,12 @@ export interface User {
   displayName: string;
   photoURL?: string;
   subscription: "free" | "premium";
+  bannerImage?: string;
+  bannerColor?: string;
+  bio?: string;
+  favoriteGenres?: string[];
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 // Book types

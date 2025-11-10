@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,29 +12,17 @@ import { signOut } from "@/lib/auth";
 export default function Header() {
   const { user, userProfile } = useAuth();
   const router = useRouter();
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
   const handleLogout = async () => {
     try {
       await signOut();
-      toast.success("Sesión cerrada correctamente");
+      toast.success("Session closed successfully");
       router.push("/login");
     } catch (error) {
       console.error("Error logging out:", error);
-      toast.error("Error al cerrar sesión");
+      toast.error("Error closing session");
     }
-  };
-
-  const getInitials = () => {
-    if (userProfile?.displayName) {
-      return userProfile.displayName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    return user?.email?.[0].toUpperCase() || "U";
   };
 
   return (
@@ -72,69 +61,111 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Profile Icon */}
+          <Link href="/profile">
+            <button className="w-13 h-13 hover:opacity-80 transition-opacity">
+              <Image
+                src="/recursos/profile-icon.svg"
+                alt="Profile"
+                width={52}
+                height={52}
+                className="w-13 h-13"
+              />
+            </button>
+          </Link>
+
+          {/* Settings Menu */}
           <div className="relative">
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-13 h-13 rounded-full bg-brand-forest flex items-center justify-center hover:bg-nook-green-dark transition-colors text-white font-sans font-bold text-lg"
-              title={userProfile?.displayName || user?.email || "Usuario"}
+              onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+              className="w-9 h-7 hover:opacity-80 transition-opacity"
             >
-              {getInitials()}
+              <Image
+                src="/recursos/nav-options-icon.svg"
+                alt="Settings"
+                width={36}
+                height={28}
+                className="w-9 h-7"
+              />
             </button>
 
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-[#E0D8D1] py-2 z-50">
-                <div className="px-4 py-3 border-b border-[#E0D8D1]">
-                  <p className="font-sans text-sm font-semibold text-nook-brown truncate">
-                    {userProfile?.displayName || "Usuario"}
+            {showSettingsMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-[#A3A692] py-2 z-50">
+                <div className="px-4 py-3 border-b border-[#A3A692]">
+                  <p className="font-sans text-sm font-semibold text-[#555931] truncate">
+                    {userProfile?.displayName || user?.email?.split("@")[0] || "User"}
                   </p>
-                  <p className="font-sans text-xs text-nook-brown/60 truncate">
+                  <p className="font-sans text-xs text-[#888C65] truncate">
                     {user?.email}
-                  </p>
-                  <p className="font-sans text-xs text-brand-forest font-medium mt-1">
-                    Plan: {userProfile?.subscription === "premium" ? "Premium" : "Free"}
                   </p>
                 </div>
                 
                 <button
                   onClick={() => {
-                    setShowUserMenu(false);
-                    router.push("/profile");
+                    setShowSettingsMenu(false);
+                    router.push("/settings");
                   }}
-                  className="w-full text-left px-4 py-2 font-sans text-sm text-nook-brown hover:bg-surface-paper-light transition-colors"
+                  className="w-full text-left px-4 py-2 font-sans text-sm text-[#555931] hover:bg-[#F5F1E8] transition-colors"
                 >
-                  Mi perfil
+                  Settings
                 </button>
                 
                 <button
                   onClick={() => {
-                    setShowUserMenu(false);
-                    router.push("/settings");
+                    setShowSettingsMenu(false);
+                    // Theme toggle functionality
+                    toast.info("Theme switching coming soon");
                   }}
-                  className="w-full text-left px-4 py-2 font-sans text-sm text-nook-brown hover:bg-surface-paper-light transition-colors"
+                  className="w-full text-left px-4 py-2 font-sans text-sm text-[#555931] hover:bg-[#F5F1E8] transition-colors"
                 >
-                  Configuración
+                  Appearance
                 </button>
                 
-                <div className="border-t border-[#E0D8D1] mt-2 pt-2">
+                <button
+                  onClick={() => {
+                    setShowSettingsMenu(false);
+                    router.push("/contact");
+                  }}
+                  className="w-full text-left px-4 py-2 font-sans text-sm text-[#555931] hover:bg-[#F5F1E8] transition-colors"
+                >
+                  Contact
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowSettingsMenu(false);
+                    router.push("/about");
+                  }}
+                  className="w-full text-left px-4 py-2 font-sans text-sm text-[#555931] hover:bg-[#F5F1E8] transition-colors"
+                >
+                  About Us
+                </button>
+                
+                <div className="border-t border-[#A3A692] mt-2 pt-2">
                   <button
                     onClick={() => {
-                      setShowUserMenu(false);
+                      setShowSettingsMenu(false);
                       handleLogout();
                     }}
-                    className="w-full text-left px-4 py-2 font-sans text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full text-left px-4 py-2 font-sans text-sm text-[#C85A54] hover:bg-[#C85A54]/5 transition-colors"
                   >
-                    Cerrar sesión
+                    Log Out
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          <button className="md:hidden w-9 h-7 flex flex-col justify-between">
-            <div className="w-full h-0.5 bg-brand-forest"></div>
-            <div className="w-full h-0.5 bg-brand-forest"></div>
-            <div className="w-full h-0.5 bg-brand-forest"></div>
+          {/* Mobile Menu */}
+          <button className="md:hidden w-9 h-7">
+            <Image
+              src="/recursos/nav-options-icon.svg"
+              alt="Menu"
+              width={36}
+              height={28}
+              className="w-9 h-7"
+            />
           </button>
         </div>
       </div>
