@@ -19,6 +19,14 @@ export interface UserProfile {
   displayName: string;
   createdAt: Date;
   subscription: "free" | "premium";
+  favoriteGenres?: string[];
+  photoURL?: string;
+  bannerImage?: string;
+  bannerColor?: string;
+  bio?: string;
+  showDisplayName?: boolean;
+  showBio?: boolean;
+  showGenres?: boolean;
 }
 
 /**

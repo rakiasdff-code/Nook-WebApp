@@ -16,7 +16,7 @@ export function getGreeting() {
     };
   } else {
     return {
-      title: "Hey! Still up reading",
+      title: "Hey! Still up",
       subtitle: "No judging, enjoy."
     };
   }

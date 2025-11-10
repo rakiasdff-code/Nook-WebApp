@@ -3,39 +3,139 @@
 import Image from "next/image";
 import { useAuth } from "@/lib/AuthContext";
 import { getGreeting, getDisplayName } from "@/lib/utils/greetings";
+import { useState, useEffect } from "react";
+import { BookCard } from "@/components/BookCard";
+import { ReadingStatusBanner } from "@/components/ReadingStatusBanner";
+import { BookOpen, TrendingUp, Calendar, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+interface BookRelease {
+  id: string;
+  title: string;
+  authors: string[];
+  coverImage?: string;
+  publishedDate?: string;
+  description?: string;
+  categories?: string[];
+  rating?: number;
+  link?: string;
+}
+
+interface BookRecommendation extends BookRelease {
+  matchReason: string;
+}
+
+interface ReadingBook {
+  id: string;
+  title: string;
+  author: string;
+  coverUrl?: string;
+  progress?: number;
+}
 
 export default function HomePage() {
   const { user, userProfile } = useAuth();
+  const router = useRouter();
   const greeting = getGreeting();
   const displayName = getDisplayName(userProfile?.displayName, user?.email);
+
+  const [recommendations, setRecommendations] = useState<BookRecommendation[]>(
+    [],
+  );
+  const [newReleases, setNewReleases] = useState<BookRelease[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [loadingReleases, setLoadingReleases] = useState(true);
+
+  // Reading status - TODO: Fetch from Firebase
+  // Para probar el estado VACÍO, comenta las líneas 52-57 y 61-66
+  // Para probar el estado CON DATOS, descomenta las líneas 52-57 y 61-66
+  const [currentlyReading, setCurrentlyReading] = useState<
+    ReadingBook | undefined
+  >(
+    // Mock data - replace with Firebase fetch
+    {
+      id: "1",
+      title: "The Heir of Fire",
+      author: "Sarah J. Maas",
+      progress: 47,
+    },
+    // undefined // <- Descomentar para probar estado vacío
+  );
+
+  const [wantToRead, setWantToRead] = useState<ReadingBook[]>(
+    // Mock data - replace with Firebase fetch
+    [
+      { id: "2", title: "The Way of Kings", author: "Brandon Sanderson" },
+      {
+        id: "3",
+        title: "A Court of Thorns and Roses",
+        author: "Sarah J. Maas",
+      },
+      { id: "4", title: "Book Lovers", author: "Amber V. Nicole" },
+    ],
+    // [] // <- Descomentar para probar estado vacío
+  );
+
+  const handleAddCurrentBook = () => {
+    router.push("/bookshelf?action=add-current");
+  };
+
+  const handleAddToWantToRead = () => {
+    router.push("/bookshelf?action=add-want");
+  };
+
+  // Fetch recommendations
+  useEffect(() => {
+    async function fetchRecommendations() {
+      try {
+        const genres =
+          userProfile?.favoriteGenres?.join(",") || "fantasy,fiction";
+        const response = await fetch(
+          `/api/books/recommendations?genres=${genres}&limit=8`,
+        );
+        const data = await response.json();
+        if (data.success) {
+          setRecommendations(data.recommendations);
+        }
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    }
+
+    fetchRecommendations();
+  }, [userProfile?.favoriteGenres]);
+
+  // Fetch new releases
+  useEffect(() => {
+    async function fetchNewReleases() {
+      try {
+        const response = await fetch(
+          "/api/books/new-releases?genre=fiction&limit=12",
+        );
+        const data = await response.json();
+        if (data.success) {
+          setNewReleases(data.books);
+        }
+      } catch (error) {
+        console.error("Error fetching new releases:", error);
+      } finally {
+        setLoadingReleases(false);
+      }
+    }
+
+    fetchNewReleases();
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface-paper">
       {/* Hero Section */}
-      <section className="w-full px-6 md:px-12 lg:px-40 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_auto] gap-12 lg:gap-36 items-center">
+      <section className="w-full px-6 md:px-12 lg:px-24 xl:px-40 py-16 md:py-24">
+        <div className="max-w-[1600px] mx-auto grid md:grid-cols-[minmax(400px,1fr)_minmax(300px,500px)] lg:grid-cols-[minmax(500px,1fr)_minmax(400px,600px)] gap-8 md:gap-12 lg:gap-16 xl:gap-24 items-center">
           {/* Left content */}
-          <div className="space-y-10">
-            <div className="space-y-5">
-              <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-semibold text-nook-green-light leading-[1.15] tracking-tight">
-                {greeting.title},<br />
-                {displayName}!
-              </h1>
-
-              <p className="font-sans text-xl md:text-2xl text-brand-forest leading-relaxed whitespace-pre-line">
-                {greeting.subtitle}
-              </p>
-
-              <div className="flex flex-wrap gap-6 pt-4">
-                <button className="bg-brand-forest text-nook-cream font-sans text-base font-bold py-2.5 px-5 rounded-xl hover:bg-nook-green-dark transition-colors">
-                  Find your Nook
-                </button>
-                <button className="border-2 border-brand-forest text-brand-forest font-sans text-base font-bold py-2.5 px-5 rounded-xl hover:bg-brand-forest hover:text-white transition-colors">
-                  Bookshelf
-                </button>
-              </div>
-            </div>
-
+          <div className="space-y-10 min-w-0">
+            {/* Pre-título: definición de Nook */}
             <div className="font-serif text-[15px] text-brand-forest leading-relaxed italic space-y-1">
               <p className="font-semibold not-italic">Nook /nʊk/ noun</p>
               <p>
@@ -44,16 +144,46 @@ export default function HomePage() {
               </p>
               <p>A small, sheltered or hidden spot.</p>
             </div>
+
+            <div className="space-y-5">
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold text-nook-green-light leading-[1.15] tracking-tight">
+                {greeting.title === "Hey! Still up" ? (
+                  <>
+                    {greeting.title}
+                    <br />
+                    reading, {displayName}?
+                  </>
+                ) : (
+                  <>
+                    {greeting.title},<br />
+                    {displayName}!
+                  </>
+                )}
+              </h1>
+
+              <p className="font-sans text-xl text-brand-forest leading-relaxed whitespace-pre-line">
+                {greeting.subtitle}
+              </p>
+
+              <div className="flex gap-4 sm:gap-6 pt-4">
+                <button className="bg-brand-forest text-nook-cream font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-nook-green-dark transition-colors whitespace-nowrap">
+                  Find your Nook
+                </button>
+                <button className="border-2 border-brand-forest text-brand-forest font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-brand-forest hover:text-white transition-colors whitespace-nowrap">
+                  Bookshelf
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Right illustration */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex md:justify-end md:items-center flex-shrink-0">
             <Image
-              src="https://api.builder.io/api/v1/image/assets/TEMP/7398012bf4a72aaacbfa21b70a9da8ad302ca6ac?width=1651"
+              src="/recursos/background-home-bookshelf.svg"
               alt="Bookshelf illustration"
-              width={826}
-              height={800}
-              className="w-full max-w-2xl h-auto"
+              width={600}
+              height={600}
+              className="w-full h-auto max-w-[400px] lg:max-w-[500px] xl:max-w-[600px]"
               priority
             />
           </div>
@@ -62,51 +192,22 @@ export default function HomePage() {
 
       {/* Reading Progress Section */}
       <section className="w-full bg-surface-paper-light px-6 md:px-12 lg:px-20 py-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-12 md:gap-32">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-center gap-12 md:gap-20 lg:gap-32">
           {/* Currently reading */}
-          <div className="flex items-center gap-6 md:gap-8">
-            <Image
-              src="/recursos/book-illustration.png"
-              alt="Book illustration"
-              width={120}
-              height={120}
-              className="w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain flex-shrink-0"
-            />
-            <div className="space-y-2">
-              <h3 className="font-serif text-xl md:text-2xl font-semibold text-nook-green-light">
-                Currently reading...
-              </h3>
-              <p className="font-sans text-sm md:text-base text-nook-brown">
-                The heir of fire, by Sarah J. Mass
-              </p>
-              <p className="font-sans text-xs md:text-sm text-nook-brown">
-                47% of progress
-              </p>
-            </div>
-          </div>
+          <ReadingStatusBanner
+            type="currently-reading"
+            book={currentlyReading}
+            onAddClick={handleAddCurrentBook}
+          />
 
-          <div className="hidden md:block w-0.5 h-36 bg-brand-forest"></div>
+          <div className="hidden md:block w-0.5 h-36 bg-brand-forest/30"></div>
 
           {/* Want to read */}
-          <div className="flex items-center gap-6 md:gap-8">
-            <Image
-              src="/recursos/tidy-books-illustration.png"
-              alt="Tidy books illustration"
-              width={120}
-              height={120}
-              className="w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain flex-shrink-0"
-            />
-            <div className="space-y-2">
-              <h3 className="font-serif text-xl md:text-2xl font-semibold text-nook-green-light">
-                Want to read
-              </h3>
-              <p className="font-sans text-sm md:text-base text-nook-brown">
-                Brandon Sanderson, Sarah J. Mass,
-                <br />
-                Amber V. Nicole... and more!
-              </p>
-            </div>
-          </div>
+          <ReadingStatusBanner
+            type="want-to-read"
+            books={wantToRead}
+            onAddClick={handleAddToWantToRead}
+          />
         </div>
       </section>
 
@@ -117,33 +218,22 @@ export default function HomePage() {
             What are you up to today?
           </h2>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-8">
             {/* My nook card */}
             <div className="bg-surface-paper-light rounded-2xl p-10 flex flex-col items-center text-center space-y-7 hover:shadow-lg transition-shadow">
               <div className="space-y-3 flex flex-col items-center">
-                <svg width="54" height="54" viewBox="0 0 54 54" fill="none">
-                  <rect
-                    x="10"
-                    y="10"
-                    width="30"
-                    height="35"
-                    rx="15"
-                    stroke="#566033"
-                    strokeWidth="1.5"
-                    fill="none"
-                  />
-                  <path
-                    d="M25 15 Q25 10, 30 15"
-                    stroke="#566033"
-                    strokeWidth="1.5"
-                    fill="none"
-                  />
-                </svg>
+                <Image
+                  src="/recursos/nook-icon.png"
+                  alt="My nook"
+                  width={54}
+                  height={54}
+                  className="w-14 h-14 object-contain"
+                />
                 <h3 className="font-serif text-2xl font-semibold text-nook-green-light">
                   My nook
                 </h3>
               </div>
-              <p className="font-sans text-base text-nook-brown leading-relaxed">
+              <p className="font-sans text-sm text-nook-brown leading-relaxed">
                 Find your Nook! Choose from pre-configured environments or
                 design your own.
               </p>
@@ -165,7 +255,7 @@ export default function HomePage() {
                   Bookshelf
                 </h3>
               </div>
-              <p className="font-sans text-base text-nook-brown leading-relaxed">
+              <p className="font-sans text-sm text-nook-brown leading-relaxed">
                 Organize your collection with custom lists. Track your current
                 reads and discover what to read next
               </p>
@@ -184,7 +274,7 @@ export default function HomePage() {
                   Explore
                 </h3>
               </div>
-              <p className="font-sans text-base text-nook-brown leading-relaxed">
+              <p className="font-sans text-sm text-nook-brown leading-relaxed">
                 Discover new literary worlds, inspiring bookshelves, and the
                 most creative nooks from the community.
               </p>
@@ -203,12 +293,153 @@ export default function HomePage() {
                   Connect
                 </h3>
               </div>
-              <p className="font-sans text-base text-nook-brown leading-relaxed">
+              <p className="font-sans text-sm text-nook-brown leading-relaxed">
                 Participate in discussion threads, share recommendations, and
                 connect with readers like you.
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Reading Analytics Section */}
+      <section className="w-full px-6 md:px-12 lg:px-40 py-20 bg-surface-paper-light/50">
+        <div className="max-w-7xl mx-auto space-y-14">
+          <div className="text-center space-y-4">
+            <h2 className="font-serif text-4xl md:text-5xl font-semibold text-nook-green-dark tracking-tight">
+              Your Reading Journey
+            </h2>
+            <p className="font-sans text-lg text-nook-brown">
+              Discover your next favorite book, handpicked just for you
+            </p>
+          </div>
+
+          {/* Stats Cards - Mock data por ahora */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div className="bg-white rounded-xl p-6 text-center space-y-2 shadow-sm hover:shadow-md transition-shadow">
+              <BookOpen className="w-8 h-8 text-nook-green-light mx-auto" />
+              <p className="font-serif text-3xl font-semibold text-nook-green-dark">
+                12
+              </p>
+              <p className="font-sans text-sm text-nook-brown">
+                Books This Year
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 text-center space-y-2 shadow-sm hover:shadow-md transition-shadow">
+              <TrendingUp className="w-8 h-8 text-nook-green-light mx-auto" />
+              <p className="font-serif text-3xl font-semibold text-nook-green-dark">
+                3,240
+              </p>
+              <p className="font-sans text-sm text-nook-brown">Pages Read</p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 text-center space-y-2 shadow-sm hover:shadow-md transition-shadow">
+              <Calendar className="w-8 h-8 text-nook-green-light mx-auto" />
+              <p className="font-serif text-3xl font-semibold text-nook-green-dark">
+                5
+              </p>
+              <p className="font-sans text-sm text-nook-brown">Day Streak</p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 text-center space-y-2 shadow-sm hover:shadow-md transition-shadow">
+              <Star className="w-8 h-8 text-nook-green-light mx-auto" />
+              <p className="font-serif text-3xl font-semibold text-nook-green-dark">
+                4.3
+              </p>
+              <p className="font-sans text-sm text-nook-brown">Avg Rating</p>
+            </div>
+          </div>
+
+          {/* Recommended Books */}
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-2xl md:text-3xl font-semibold text-nook-green-dark">
+                Recommended for You
+              </h3>
+              <button className="font-sans text-sm text-nook-green-light hover:underline">
+                See all
+              </button>
+            </div>
+
+            {loadingRecommendations ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="space-y-3 animate-pulse">
+                    <div className="aspect-[2/3] bg-surface-paper-light rounded-lg" />
+                    <div className="h-4 bg-surface-paper-light rounded w-3/4" />
+                    <div className="h-3 bg-surface-paper-light rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : recommendations.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                {recommendations.slice(0, 4).map((book) => (
+                  <BookCard
+                    key={book.id}
+                    title={book.title}
+                    authors={book.authors}
+                    coverImage={book.coverImage}
+                    rating={book.rating}
+                    matchReason={book.matchReason}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-xl">
+                <BookOpen className="w-16 h-16 text-brand-forest/30 mx-auto mb-4" />
+                <p className="font-sans text-base text-nook-brown">
+                  Start tracking your reading to get personalized
+                  recommendations
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Fresh Off the Press Section */}
+      <section className="w-full px-6 md:px-12 lg:px-40 py-20">
+        <div className="max-w-7xl mx-auto space-y-14">
+          <div className="text-center space-y-4">
+            <h2 className="font-serif text-4xl md:text-5xl font-semibold text-nook-green-dark tracking-tight">
+              Fresh Off the Press 📚
+            </h2>
+            <p className="font-sans text-lg text-nook-brown">
+              The latest releases in fiction and beyond
+            </p>
+          </div>
+
+          {loadingReleases ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="space-y-3 animate-pulse">
+                  <div className="aspect-[2/3] bg-surface-paper-light rounded-lg" />
+                  <div className="h-4 bg-surface-paper-light rounded w-3/4" />
+                  <div className="h-3 bg-surface-paper-light rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : newReleases.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+              {newReleases.map((book) => (
+                <BookCard
+                  key={book.id}
+                  title={book.title}
+                  authors={book.authors}
+                  coverImage={book.coverImage}
+                  rating={book.rating}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-surface-paper-light rounded-xl">
+              <BookOpen className="w-16 h-16 text-brand-forest/30 mx-auto mb-4" />
+              <p className="font-sans text-base text-nook-brown">
+                No new releases available at the moment
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </div>
