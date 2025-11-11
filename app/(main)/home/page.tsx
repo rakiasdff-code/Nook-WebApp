@@ -166,10 +166,16 @@ export default function HomePage() {
               </p>
 
               <div className="flex gap-4 sm:gap-6 pt-4">
-                <button className="bg-brand-forest text-nook-cream font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-nook-green-dark transition-colors whitespace-nowrap">
+                <button
+                  onClick={() => router.push("/my-nook")}
+                  className="bg-brand-forest text-nook-cream font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-nook-green-dark transition-colors whitespace-nowrap"
+                >
                   Find your Nook
                 </button>
-                <button className="border-2 border-brand-forest text-brand-forest font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-brand-forest hover:text-white transition-colors whitespace-nowrap">
+                <button
+                  onClick={() => router.push("/bookshelf")}
+                  className="border-2 border-brand-forest text-brand-forest font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-brand-forest hover:text-white transition-colors whitespace-nowrap"
+                >
                   Bookshelf
                 </button>
               </div>

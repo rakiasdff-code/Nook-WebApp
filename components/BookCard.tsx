@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Book } from "lucide-react";
+import { BookCoverPlaceholder } from "./BookCoverPlaceholder";
 
 interface BookCardProps {
   title: string;
@@ -36,9 +36,11 @@ export function BookCard({
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-surface-paper-light">
-            <Book className="w-12 h-12 text-brand-forest/30" />
-          </div>
+          <BookCoverPlaceholder
+            title={title}
+            author={authors[0]}
+            size="medium"
+          />
         )}
         {rating && (
           <div className="absolute top-2 right-2 bg-nook-green-light/90 backdrop-blur-sm px-2 py-1 rounded-md">

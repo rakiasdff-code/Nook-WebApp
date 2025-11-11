@@ -35,19 +35,28 @@ export async function GET(request: Request) {
 
       if (response.ok) {
         const data = await response.json();
-        const books = data.items?.map((item: any) => ({
-          id: item.id,
-          title: item.volumeInfo.title,
-          authors: item.volumeInfo.authors || ["Unknown Author"],
-          coverImage: item.volumeInfo.imageLinks?.thumbnail?.replace(
-            "http://",
-            "https://"
-          ),
-          description: item.volumeInfo.description,
-          categories: item.volumeInfo.categories,
-          rating: item.volumeInfo.averageRating,
-          matchReason: `Based on your interest in ${genre}`,
-        })) || [];
+        const books = data.items?.map((item: any) => {
+          // Obtener imagen de mayor calidad
+          let coverImage = item.volumeInfo.imageLinks?.thumbnail;
+          if (coverImage) {
+            coverImage = coverImage.replace("http://", "https://");
+            coverImage = coverImage.replace("&zoom=1", "&zoom=2");
+            if (!coverImage.includes("zoom=")) {
+              coverImage += "&zoom=2";
+            }
+          }
+
+          return {
+            id: item.id,
+            title: item.volumeInfo.title,
+            authors: item.volumeInfo.authors || ["Unknown Author"],
+            coverImage,
+            description: item.volumeInfo.description,
+            categories: item.volumeInfo.categories,
+            rating: item.volumeInfo.averageRating,
+            matchReason: `Based on your interest in ${genre}`,
+          };
+        }) || [];
 
         allRecommendations.push(...books);
       }

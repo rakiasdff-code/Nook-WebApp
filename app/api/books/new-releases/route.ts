@@ -50,20 +50,32 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
-    const books: BookRelease[] = data.items?.map((item: GoogleBooksVolume) => ({
-      id: item.id,
-      title: item.volumeInfo.title,
-      authors: item.volumeInfo.authors || ["Unknown Author"],
-      coverImage: item.volumeInfo.imageLinks?.thumbnail?.replace(
-        "http://",
-        "https://"
-      ),
-      publishedDate: item.volumeInfo.publishedDate,
-      description: item.volumeInfo.description,
-      categories: item.volumeInfo.categories,
-      rating: item.volumeInfo.averageRating,
-      link: item.volumeInfo.infoLink,
-    })) || [];
+    const books: BookRelease[] = data.items?.map((item: GoogleBooksVolume) => {
+      // Obtener imagen de mayor calidad
+      let coverImage = item.volumeInfo.imageLinks?.thumbnail;
+      if (coverImage) {
+        // Reemplazar http por https y aumentar zoom
+        coverImage = coverImage.replace("http://", "https://");
+        // Cambiar zoom=1 a zoom=2 para mejor calidad
+        coverImage = coverImage.replace("&zoom=1", "&zoom=2");
+        // Si no tiene zoom, añadirlo
+        if (!coverImage.includes("zoom=")) {
+          coverImage += "&zoom=2";
+        }
+      }
+
+      return {
+        id: item.id,
+        title: item.volumeInfo.title,
+        authors: item.volumeInfo.authors || ["Unknown Author"],
+        coverImage,
+        publishedDate: item.volumeInfo.publishedDate,
+        description: item.volumeInfo.description,
+        categories: item.volumeInfo.categories,
+        rating: item.volumeInfo.averageRating,
+        link: item.volumeInfo.infoLink,
+      };
+    }) || [];
 
     return NextResponse.json({
       success: true,
