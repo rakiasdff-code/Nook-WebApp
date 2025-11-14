@@ -51,9 +51,46 @@
     --surface-paper-light: 36 33% 98%;
     --text-primary: 30 11% 41%;
     --text-secondary: 73 10% 48%;
-    
+
     /* Color para el texto de la frase destacada */
     --sds-color-text-default-secondary: #4A4A3A;
+  }
+
+  .dark {
+    --background: 21 11% 28%;
+    --foreground: 36 33% 98%;
+
+    --card: 36 33% 98%;
+    --card-foreground: 30 11% 41%;
+
+    --popover: 21 11% 28%;
+    --popover-foreground: 36 33% 98%;
+
+    --primary: 21 7% 26%;
+    --primary-foreground: 36 33% 98%;
+
+    --secondary: 21 11% 28%;
+    --secondary-foreground: 36 33% 98%;
+
+    --muted: 21 11% 35%;
+    --muted-foreground: 36 33% 98%;
+
+    --accent: 21 11% 35%;
+    --accent-foreground: 36 33% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 36 33% 98%;
+
+    --border: 21 11% 28%;
+    --input: 21 11% 28%;
+    --ring: 36 33% 98%;
+
+    --brand-forest: 21 7% 26%;
+    --brand-forest-light: 36 33% 98%;
+    --surface-paper: 21 11% 28%;
+    --surface-paper-light: 36 33% 98%;
+    --text-primary: 36 33% 98%;
+    --text-secondary: 36 20% 85%;
   }
 }
 
@@ -63,7 +100,7 @@
   }
 
   body {
-    @apply bg-[#EFEDEB] text-foreground font-sans;
+    @apply bg-[#EFEDEB] dark:bg-[#4D453F] text-foreground font-sans transition-colors;
   }
 
   :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {

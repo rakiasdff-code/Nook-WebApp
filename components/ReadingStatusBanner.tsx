@@ -50,31 +50,31 @@ export function ReadingStatusBanner({
         {hasContent ? (
           <>
             {/* With Content */}
-            <h3 className="font-serif text-xl md:text-2xl font-semibold text-nook-green-light">
+            <h3 className="font-serif text-xl md:text-2xl font-semibold text-nook-green-light dark:text-[#FCFBF8] transition-colors">
               {isCurrentlyReading ? "Currently reading" : "Want to read"}
             </h3>
-            
+
             {isCurrentlyReading && book ? (
               <>
-                <Link 
+                <Link
                   href={`/bookshelf?book=${book.id}`}
                   className="group block"
                 >
-                  <p className="font-sans text-sm md:text-base text-nook-brown group-hover:text-nook-green-light transition-colors line-clamp-1">
+                  <p className="font-sans text-sm md:text-base text-nook-brown dark:text-[#FCFBF8] group-hover:text-nook-green-light transition-colors line-clamp-1">
                     <span className="font-semibold">{book.title}</span>
                     {book.author && (
-                      <span className="text-nook-brown/80"> by {book.author}</span>
+                      <span className="text-nook-brown/80 dark:text-[#FCFBF8]/80"> by {book.author}</span>
                     )}
                   </p>
                 </Link>
                 {book.progress !== undefined && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <p className="font-sans text-xs md:text-sm text-nook-brown/80">
+                      <p className="font-sans text-xs md:text-sm text-nook-brown/80 dark:text-[#FCFBF8]/80 transition-colors">
                         {book.progress}% complete
                       </p>
                     </div>
-                    <div className="w-full bg-surface-paper rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-surface-paper dark:bg-[#FCFBF8]/20 rounded-full h-2 overflow-hidden transition-colors">
                       <div
                         className="bg-nook-green-light h-full rounded-full transition-all duration-500"
                         style={{ width: `${book.progress}%` }}
@@ -86,10 +86,10 @@ export function ReadingStatusBanner({
             ) : (
               books && (
                 <div className="space-y-2">
-                  <p className="font-sans text-sm md:text-base text-nook-brown line-clamp-2">
+                  <p className="font-sans text-sm md:text-base text-nook-brown dark:text-[#FCFBF8] transition-colors line-clamp-2">
                     {books.slice(0, 3).map((b) => b.author || b.title).join(", ")}
                     {books.length > 3 && (
-                      <span className="text-nook-brown/70"> and {books.length - 3} more!</span>
+                      <span className="text-nook-brown/70 dark:text-[#FCFBF8]/70"> and {books.length - 3} more!</span>
                     )}
                   </p>
                   <Link
@@ -105,12 +105,12 @@ export function ReadingStatusBanner({
         ) : (
           <>
             {/* Empty State */}
-            <h3 className="font-serif text-xl md:text-2xl font-semibold text-nook-green-dark">
+            <h3 className="font-serif text-xl md:text-2xl font-semibold text-nook-green-dark dark:text-[#FCFBF8] transition-colors">
               {isCurrentlyReading
                 ? "What are you reading?"
                 : "What do you want to read?"}
             </h3>
-            <p className="font-sans text-sm md:text-base text-nook-brown/80">
+            <p className="font-sans text-sm md:text-base text-nook-brown/80 dark:text-[#FCFBF8]/80 transition-colors">
               {isCurrentlyReading
                 ? "Track your current book and see your progress"
                 : "Build your reading list with books you want to explore"}

@@ -26,7 +26,7 @@ export function BookCard({
       className="group cursor-pointer flex flex-col gap-3 hover:scale-105 transition-transform duration-200"
     >
       {/* Book Cover */}
-      <div className="relative aspect-[2/3] w-full bg-surface-paper rounded-lg overflow-hidden shadow-md">
+      <div className="relative aspect-[2/3] w-full bg-surface-paper dark:bg-[#FCFBF8] rounded-lg overflow-hidden shadow-md transition-colors">
         {coverImage ? (
           <Image
             src={coverImage}
@@ -53,14 +53,14 @@ export function BookCard({
 
       {/* Book Info */}
       <div className="space-y-1">
-        <h4 className="font-serif text-base font-semibold text-nook-green-dark line-clamp-2 group-hover:text-nook-green-light transition-colors">
+        <h4 className="font-serif text-base font-semibold text-nook-green-dark dark:text-[#FCFBF8] line-clamp-2 group-hover:text-nook-green-light transition-colors">
           {title}
         </h4>
-        <p className="font-sans text-sm text-nook-brown line-clamp-1">
+        <p className="font-sans text-sm text-nook-brown dark:text-[#FCFBF8] line-clamp-1 transition-colors">
           {authors.join(", ")}
         </p>
         {matchReason && (
-          <p className="font-sans text-xs text-brand-forest/70 italic">
+          <p className="font-sans text-xs text-brand-forest/70 dark:text-[#FCFBF8]/70 italic transition-colors">
             {matchReason}
           </p>
         )}

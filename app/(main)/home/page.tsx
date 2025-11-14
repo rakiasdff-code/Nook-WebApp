@@ -129,14 +129,14 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-surface-paper">
+    <div className="min-h-screen bg-surface-paper dark:bg-[#4D453F] transition-colors">
       {/* Hero Section */}
       <section className="w-full px-6 md:px-12 lg:px-24 xl:px-40 py-16 md:py-24">
         <div className="max-w-[1600px] mx-auto grid md:grid-cols-[minmax(400px,1fr)_minmax(300px,500px)] lg:grid-cols-[minmax(500px,1fr)_minmax(400px,600px)] gap-8 md:gap-12 lg:gap-16 xl:gap-24 items-center">
           {/* Left content */}
           <div className="space-y-10 min-w-0">
             {/* Pre-título: definición de Nook */}
-            <div className="font-serif text-[15px] text-brand-forest leading-relaxed italic space-y-1">
+            <div className="font-serif text-[15px] text-brand-forest dark:text-[#FCFBF8] leading-relaxed italic space-y-1 transition-colors">
               <p className="font-semibold not-italic">Nook /nʊk/ noun</p>
               <p>
                 A corner or recess, especially one offering seclusion or
@@ -146,7 +146,7 @@ export default function HomePage() {
             </div>
 
             <div className="space-y-5">
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold text-nook-green-light leading-[1.15] tracking-tight">
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold text-nook-green-light dark:text-[#FCFBF8] leading-[1.15] tracking-tight transition-colors">
                 {greeting.title === "Hey! Still up" ? (
                   <>
                     {greeting.title}
@@ -161,20 +161,20 @@ export default function HomePage() {
                 )}
               </h1>
 
-              <p className="font-sans text-xl text-brand-forest leading-relaxed whitespace-pre-line">
+              <p className="font-sans text-xl text-brand-forest dark:text-[#FCFBF8] leading-relaxed whitespace-pre-line transition-colors">
                 {greeting.subtitle}
               </p>
 
               <div className="flex gap-4 sm:gap-6 pt-4">
                 <button
                   onClick={() => router.push("/my-nook")}
-                  className="bg-brand-forest text-nook-cream font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-nook-green-dark transition-colors whitespace-nowrap"
+                  className="bg-brand-forest dark:bg-[#FCFBF8] text-nook-cream dark:text-[#4D453F] font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-nook-green-dark dark:hover:bg-[#FCFBF8]/90 transition-colors whitespace-nowrap"
                 >
                   Find your Nook
                 </button>
                 <button
                   onClick={() => router.push("/bookshelf")}
-                  className="border-2 border-brand-forest text-brand-forest font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-brand-forest hover:text-white transition-colors whitespace-nowrap"
+                  className="border-2 border-brand-forest dark:border-[#FCFBF8] text-brand-forest dark:text-[#FCFBF8] font-sans text-sm sm:text-base font-bold py-2.5 px-4 sm:px-5 rounded-xl hover:bg-brand-forest hover:text-white dark:hover:bg-[#FCFBF8] dark:hover:text-[#4D453F] transition-colors whitespace-nowrap"
                 >
                   Bookshelf
                 </button>
@@ -197,7 +197,7 @@ export default function HomePage() {
       </section>
 
       {/* Reading Progress Section */}
-      <section className="w-full bg-surface-paper-light px-6 md:px-12 lg:px-20 py-20">
+      <section className="w-full bg-surface-paper-light dark:bg-[#FCFBF8] px-6 md:px-12 lg:px-20 py-20 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-center gap-12 md:gap-20 lg:gap-32">
           {/* Currently reading */}
           <ReadingStatusBanner
@@ -206,7 +206,7 @@ export default function HomePage() {
             onAddClick={handleAddCurrentBook}
           />
 
-          <div className="hidden md:block w-0.5 h-36 bg-brand-forest/30"></div>
+          <div className="hidden md:block w-0.5 h-36 bg-brand-forest/30 dark:bg-[#4D453F]/30"></div>
 
           {/* Want to read */}
           <ReadingStatusBanner
@@ -220,13 +220,13 @@ export default function HomePage() {
       {/* What are you up to today Section */}
       <section className="w-full px-6 md:px-12 lg:px-40 py-20">
         <div className="max-w-7xl mx-auto space-y-14">
-          <h2 className="font-serif text-4xl md:text-5xl font-semibold text-nook-green-dark text-center tracking-tight">
+          <h2 className="font-serif text-4xl md:text-5xl font-semibold text-nook-green-dark dark:text-[#FCFBF8] text-center tracking-tight transition-colors">
             What are you up to today?
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-8">
             {/* My nook card */}
-            <div className="bg-surface-paper-light rounded-2xl p-10 flex flex-col items-center text-center space-y-7 hover:shadow-lg transition-shadow">
+            <div className="bg-surface-paper-light dark:bg-[#FCFBF8] rounded-2xl p-10 flex flex-col items-center text-center space-y-7 hover:shadow-lg transition-all">
               <div className="space-y-3 flex flex-col items-center">
                 <Image
                   src="/recursos/nook-icon.png"
